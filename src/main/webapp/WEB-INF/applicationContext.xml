@@ -1,0 +1,29 @@
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+http://www.springframework.org/schema/context
+http://www.springframework.org/schema/context/spring-context-3.0.xsd">
+
+    <context:component-scan base-package="com.luxoft.olshevchenko"/>
+
+    <bean id="userService" class="com.luxoft.olshevchenko.webshop.service.UserService">
+        <constructor-arg ref="userDao"/>
+    </bean>
+
+    <bean id="userDao" class="com.luxoft.olshevchenko.webshop.dao.jdbc.JdbcUserDao"/>
+
+    <bean id="productService" class="com.luxoft.olshevchenko.webshop.service.ProductService">
+        <constructor-arg ref="productDao"/>
+    </bean>
+
+    <bean id="productDao" class="com.luxoft.olshevchenko.webshop.dao.jdbc.JdbcProductDao"/>
+
+    <bean id="securityService" class="com.luxoft.olshevchenko.webshop.service.SecurityService">
+    </bean>
+
+
+
+</beans>

@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <title>Products List</title>
+</head>
+<body>
+
+<header>
+    <div class="container">
+        <div class="row">
+
+            <div class="d-flex flex-row-reverse justify-content-between align-items-center">
+                <div class="p-2">
+                    <#if login == "false">
+                    <a href="/login" class="btn btn-outline-dark">Login</a>
+                    <#else>
+                    <a href="/users/edit?id=${user.id}" class="btn btn-outline-dark">Edit Personal Info</a>
+                    <a href="/logout" class="btn btn-outline-dark">Logout</a>
+                    <a href="/products/cart" type="button" class="btn btn-outline-dark" >Shopping Cart</a>
+                </#if>
+            </div>
+            <div class="p-2 " >
+                <#if login == "false">
+                <strong>You are not logged yet!</strong>
+                <#else>
+                <strong>Logged as: ${user.email}</strong>
+            </#if>
+        </div>
+    </div>
+</header>
+
+
+
+</br>
+<h1 align="center">Products List</h1>
+</br>
+
+
+<div class="container ">
+
+    <table class="table table-striped align-middle ">
+        <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Name</th>
+            <th scope="col">Price</th>
+            <th scope="col">Creation Date</th>
+            <th scope="col ">Options</th>
+        </tr>
+        </thead>
+        <tbody>
+        <#list products as product>
+        <tr >
+            <th scope="row">${product.id}</th>
+            <td>${product.name}</td>
+            <td>${product.price?string["0.00"]}</td>
+            <td>${product.creationDate?datetime("yyyy-MM-dd")?string["dd.MM.yyyy, HH:mm"]}</td>
+            <td>
+                <#if login == "true">
+                <#if user.role == "ADMIN">
+                    <a href='/products/delete?id=${product.id}' type="button" class="btn btn-outline-dark">Delete</a>
+                    <a href='/products/edit?id=${product.id}' type="button" class="btn btn-outline-dark">Edit</a>
+                <#else>
+                </#if>
+                <form method="post" action='/products' style="display:inline;" >
+                    <input type="hidden" name="id" value="${product.id}">
+                    <input type="submit" value="Add to cart" class="btn btn-outline-dark" id="btn" >
+                </form>
+
+                <#else>
+                Please, log in to have all permisssions!
+                </#if>
+            </td>
+        </tr>
+        </#list>
+        </tbody>
+    </table>
+
+
+
+    <div align="center">
+        </br>
+        <a href="/products/add" type="button" class="btn btn-outline-dark" >Add new product</a>
+    </div>
+    <#if msgSuccess??>
+    <div class="container" align="center">
+        </br></br>
+        <p align="center"><strong>${msgSuccess}</strong></p>
+
+        </br></br>
+        <p align='center'><a href='/products'>to product list -></a></p>
+    </div>
+    <#else>
+</#if>
+</div>
+
+<!-- Optional JavaScript; choose one of the two! -->
+
+<!-- Option 1: Bootstrap Bundle with Popper -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+
+<!-- Option 2: Separate Popper and Bootstrap JS -->
+<!--
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.10.2/dist/umd/popper.min.js" integrity="sha384-7+zCNj/IqJ95wo16oMtfsKbZ9ccEh31eOz1HGyDuCQ6wgnyJNSYdrPa03rtR1zdB" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js" integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13" crossorigin="anonymous"></script>
+-->
+</body>
+</html>
