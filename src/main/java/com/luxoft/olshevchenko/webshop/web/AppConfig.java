@@ -1,7 +1,5 @@
 package com.luxoft.olshevchenko.webshop.web;
 
-import com.luxoft.olshevchenko.webshop.service.SecurityService;
-import com.luxoft.olshevchenko.webshop.web.filter.SecurityInterceptor;
 import org.postgresql.ds.PGSimpleDataSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -26,7 +24,6 @@ public class AppConfig {
         pgSimpleDataSource.setDatabaseName(properties.getProperty("jdbc_name"));
         return pgSimpleDataSource;
     }
-
 
     @Bean
     public FreeMarkerViewResolver freemarkerViewResolver() {

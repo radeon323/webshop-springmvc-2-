@@ -2,6 +2,7 @@ package com.luxoft.olshevchenko.webshop.dao.jdbc;
 
 import com.luxoft.olshevchenko.webshop.dao.ProductDao;
 import com.luxoft.olshevchenko.webshop.entity.Product;
+import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -13,6 +14,7 @@ import java.util.List;
 /**
  * @author Oleksandr Shevchenko
  */
+@Repository
 public class JdbcProductDao implements ProductDao {
     private final DataSource dataSource;
     private static final ProductRowMapper PRODUCT_ROW_MAPPER = new ProductRowMapper();

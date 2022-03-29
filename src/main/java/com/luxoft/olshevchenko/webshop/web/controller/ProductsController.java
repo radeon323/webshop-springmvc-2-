@@ -10,6 +10,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
@@ -135,7 +136,11 @@ public class ProductsController {
         User user = (User) session.getAttribute("user");
         model.addAttribute("products", products);
         model.addAttribute("user", user);
-        model.addAttribute("login", Boolean.toString(securityService.isAuth(request)));
+        if (securityService.isTokenValid(request.getCookies())) {
+            model.addAttribute("login", "true");
+        } else {
+            model.addAttribute("login", "false");
+        }
     }
 
     private void dataForProductsListCart(HttpServletRequest request, Model model) {
@@ -152,7 +157,11 @@ public class ProductsController {
         User user = (User) session.getAttribute("user");
         model.addAttribute("products", productsForCart);
         model.addAttribute("user", user);
-        model.addAttribute("login", Boolean.toString(securityService.isAuth(request)));
+        if (securityService.isTokenValid(request.getCookies())) {
+            model.addAttribute("login", "true");
+        } else {
+            model.addAttribute("login", "false");
+        }
     }
 
     private ProductForCart dtoConvertToProductForCart(Product product, int quantity) {

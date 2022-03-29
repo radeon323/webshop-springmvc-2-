@@ -2,12 +2,14 @@ package com.luxoft.olshevchenko.webshop.service;
 
 import com.luxoft.olshevchenko.webshop.dao.ProductDao;
 import com.luxoft.olshevchenko.webshop.entity.Product;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 /**
  * @author Oleksandr Shevchenko
  */
+@Service
 public class ProductService {
 
     private final ProductDao productDao;

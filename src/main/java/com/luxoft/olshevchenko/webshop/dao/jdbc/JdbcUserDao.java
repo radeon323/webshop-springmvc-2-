@@ -3,6 +3,7 @@ package com.luxoft.olshevchenko.webshop.dao.jdbc;
 import com.luxoft.olshevchenko.webshop.dao.UserDao;
 import com.luxoft.olshevchenko.webshop.entity.Role;
 import com.luxoft.olshevchenko.webshop.entity.User;
+import org.springframework.stereotype.Repository;
 
 import javax.sql.DataSource;
 import java.sql.*;
@@ -11,6 +12,7 @@ import java.util.Objects;
 /**
  * @author Oleksandr Shevchenko
  */
+@Repository
 public class JdbcUserDao implements UserDao {
     private final DataSource dataSource;
     private static final String ADD_SQL = "INSERT INTO users (email, password, gender, firstName, lastName, about, age, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";

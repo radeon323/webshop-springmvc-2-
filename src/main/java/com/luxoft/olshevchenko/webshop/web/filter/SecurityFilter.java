@@ -1,10 +1,15 @@
 package com.luxoft.olshevchenko.webshop.web.filter;
 
 import com.luxoft.olshevchenko.webshop.service.SecurityService;
+import org.springframework.context.ApplicationContextException;
+import org.springframework.web.context.WebApplicationContext;
+import org.springframework.web.context.support.WebApplicationContextUtils;
 
 import javax.servlet.*;
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.List;
 
@@ -12,12 +17,20 @@ import java.util.List;
  * @author Oleksandr Shevchenko
  */
 public class SecurityFilter implements Filter {
+    private final List<String> allowedPaths = List.of("/login", "/logout", "/register", "/favicon.ico");
 
-    private final SecurityService securityService;
-    private final List<String> allowedPaths = List.of("/login", "/logout", "/register");
+    public void setSecurityService(SecurityService securityService) {
+    }
 
-    public SecurityFilter(SecurityService securityService) {
-        this.securityService = securityService;
+    @Override
+    public void init(FilterConfig filterConfig) {
+        ServletContext servletContext = filterConfig.getServletContext();
+        WebApplicationContext webApplicationContext = WebApplicationContextUtils.getWebApplicationContext(servletContext);
+        if (webApplicationContext != null) {
+            setSecurityService(webApplicationContext.getBean(SecurityService.class));
+        } else {
+            throw new ApplicationContextException("Couldn`t get an application context");
+        }
     }
 
     @Override
@@ -26,6 +39,7 @@ public class SecurityFilter implements Filter {
         HttpServletResponse httpServletResponse = (HttpServletResponse)  servletResponse;
 
         String requestURI = httpServletRequest.getRequestURI();
+
         for (String allowedPath : allowedPaths) {
             if (requestURI.startsWith(allowedPath)) {
                 filterChain.doFilter(servletRequest, servletResponse);
@@ -38,7 +52,7 @@ public class SecurityFilter implements Filter {
             return;
         }
 
-        if (securityService.isAuth(httpServletRequest)) {
+        if (isAuth(httpServletRequest)) {
             filterChain.doFilter(servletRequest, servletResponse);
         } else {
             httpServletResponse.sendRedirect("/login");
@@ -46,12 +60,26 @@ public class SecurityFilter implements Filter {
 
     }
 
-
-    @Override
-    public void init(FilterConfig filterConfig) {
+    private boolean isAuth(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        HttpSession session = request.getSession();
+        Object userTokens = session.getAttribute("userTokens");
+        if(cookies != null && userTokens != null) {
+            for (Cookie cookie : cookies) {
+                if(cookie.getName().equals("user-token") &&
+                    userTokens.toString().contains(cookie.getValue()) && cookie.getMaxAge() < 10) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
+
 
     @Override
     public void destroy() {
     }
+
+
+
 }

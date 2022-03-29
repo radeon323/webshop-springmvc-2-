@@ -18,18 +18,18 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.UUID;
 
 /**
  * @author Oleksandr Shevchenko
  */
-@RequestMapping()
 @Controller
+@RequestMapping()
 @RequiredArgsConstructor
 public class UsersController {
 
     private final UserService userService;
     private final SecurityService securityService;
+    private static int MAX_AGE_IN_SECONDS = 10;
 
     @GetMapping("/login")
     protected String getLoginPage() {
@@ -44,19 +44,15 @@ public class UsersController {
         User user = userService.findByEmail(email);
 
         if (user != null) {
-
-            String md5 = md5(password);
-
-            if (user.getPassword().equals(md5)) {
-                String userToken = UUID.randomUUID().toString();
-                securityService.getUserTokens().add(userToken);
+            if (user.getPassword().equals(md5(password))) {
                 session.setAttribute("user", user);
                 session.setAttribute("userTokens", securityService.getUserTokens());
                 session.setAttribute("cart", new ArrayList<>());
                 session.setMaxInactiveInterval(-1);
 
+                String userToken = securityService.generateAndAddUserToken();
                 Cookie cookie = new Cookie("user-token", userToken);
-                cookie.setMaxAge(3600);
+                cookie.setMaxAge(MAX_AGE_IN_SECONDS);
                 response.addCookie(cookie);
                 return "redirect:/products";
 
@@ -77,7 +73,7 @@ public class UsersController {
 
     @GetMapping("/logout")
     protected String logout(HttpServletRequest request, HttpServletResponse response) {
-        String userToken = securityService.getUserToken(request);
+        String userToken = getUserToken(request);
         Cookie cookie = new Cookie("user-token", userToken);
         cookie.setValue(null);
         cookie.setMaxAge(0);
@@ -192,7 +188,17 @@ public class UsersController {
         return md5;
     }
 
-
+    private static String getUserToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if (cookie.getName().equals("user-token")) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
+    }
 
 
 }

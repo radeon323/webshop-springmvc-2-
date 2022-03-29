@@ -16,11 +16,4 @@
 
     <mvc:resources mapping="/resources/**" location="/resources/" />
 
-
-    <mvc:interceptors>
-        <bean class="com.luxoft.olshevchenko.webshop.web.filter.SecurityInterceptor" />
-    </mvc:interceptors>
-
-
-
 </beans>
