@@ -50,9 +50,6 @@ public class SecurityService {
     }
 
     public boolean isTokenValid(Cookie[] cookies) {
-        if (userTokens == null) {
-            userTokens = Collections.synchronizedList(new ArrayList<>());
-        }
             if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if(cookie.getName().equals("user-token")) {

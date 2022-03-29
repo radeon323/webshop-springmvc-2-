@@ -4,6 +4,7 @@ import com.luxoft.olshevchenko.webshop.entity.Role;
 import com.luxoft.olshevchenko.webshop.entity.User;
 import com.luxoft.olshevchenko.webshop.service.SecurityService;
 import com.luxoft.olshevchenko.webshop.service.UserService;
+import com.luxoft.olshevchenko.webshop.web.PropertiesReader;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -29,7 +30,7 @@ public class UsersController {
 
     private final UserService userService;
     private final SecurityService securityService;
-    private static int MAX_AGE_IN_SECONDS = 10;
+    private static final int MAX_AGE_IN_SECONDS = Integer.parseInt(PropertiesReader.getProperties().getProperty("cookie_max_age"));
 
     @GetMapping("/login")
     protected String getLoginPage() {
