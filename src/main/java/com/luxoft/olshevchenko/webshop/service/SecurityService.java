@@ -1,5 +1,6 @@
 package com.luxoft.olshevchenko.webshop.service;
 
+import com.luxoft.olshevchenko.webshop.web.PropertiesReader;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.stereotype.Service;
@@ -20,6 +21,7 @@ import java.util.UUID;
 public class SecurityService {
 
     List<String> userTokens = Collections.synchronizedList(new ArrayList<>());
+    private static final int MAX_AGE_IN_SECONDS = Integer.parseInt(PropertiesReader.getProperties().getProperty("cookie_max_age"));
     static MessageDigest messageDigest;
 
     @SneakyThrows
@@ -53,7 +55,7 @@ public class SecurityService {
             if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if(cookie.getName().equals("user-token")) {
-                    if(userTokens.contains(cookie.getValue())) {
+                    if(userTokens.contains(cookie.getValue()) && cookie.getMaxAge() < MAX_AGE_IN_SECONDS) {
                         return true;
                     }
                     break;
