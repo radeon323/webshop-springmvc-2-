@@ -1,8 +1,9 @@
 package com.luxoft.olshevchenko.webshop.web.filter;
 
 import com.luxoft.olshevchenko.webshop.service.SecurityService;
-import com.luxoft.olshevchenko.webshop.web.PropertiesReader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContextException;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
@@ -17,9 +18,12 @@ import java.util.List;
 /**
  * @author Oleksandr Shevchenko
  */
+@PropertySource("classpath:/application.properties")
 public class SecurityFilter implements Filter {
     private final List<String> allowedPaths = List.of("/login", "/logout", "/register", "/favicon.ico");
-    private static final int MAX_AGE_IN_SECONDS = Integer.parseInt(PropertiesReader.getProperties().getProperty("cookie_max_age"));
+
+    @Value("${cookie_max_age}")
+    private int MAX_AGE_IN_SECONDS;
 
     public void setSecurityService(SecurityService securityService) {
     }
@@ -66,6 +70,7 @@ public class SecurityFilter implements Filter {
         Cookie[] cookies = request.getCookies();
         HttpSession session = request.getSession();
         Object userTokens = session.getAttribute("userTokens");
+        System.out.println(MAX_AGE_IN_SECONDS);
         if(cookies != null && userTokens != null) {
             for (Cookie cookie : cookies) {
                 if(cookie.getName().equals("user-token") &&

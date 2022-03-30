@@ -4,8 +4,9 @@ import com.luxoft.olshevchenko.webshop.entity.Role;
 import com.luxoft.olshevchenko.webshop.entity.User;
 import com.luxoft.olshevchenko.webshop.service.SecurityService;
 import com.luxoft.olshevchenko.webshop.service.UserService;
-import com.luxoft.olshevchenko.webshop.web.PropertiesReader;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,11 +27,14 @@ import java.util.ArrayList;
 @Controller
 @RequestMapping()
 @RequiredArgsConstructor
+@PropertySource("classpath:/application.properties")
 public class UsersController {
 
     private final UserService userService;
     private final SecurityService securityService;
-    private static final int MAX_AGE_IN_SECONDS = Integer.parseInt(PropertiesReader.getProperties().getProperty("cookie_max_age"));
+
+    @Value("${cookie_max_age}")
+    private int MAX_AGE_IN_SECONDS;
 
     @GetMapping("/login")
     protected String getLoginPage() {

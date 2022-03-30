@@ -2,27 +2,30 @@ package com.luxoft.olshevchenko.webshop.jdbc;
 
 import com.luxoft.olshevchenko.webshop.dao.jdbc.JdbcProductDao;
 import com.luxoft.olshevchenko.webshop.entity.Product;
-import com.luxoft.olshevchenko.webshop.web.PropertiesReader;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.postgresql.ds.PGSimpleDataSource;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 
 import java.util.List;
-import java.util.Properties;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.when;
 
+@PropertySource("classpath:/application.properties")
 class JdbcProductDaoTest {
 
     @Test
-    public void testFindAllReturnCorrectData() {
-        Properties properties = PropertiesReader.getProperties();
+    public void testFindAllReturnCorrectData(@Value("${jdbc_url}") String jdbUrl,
+                                             @Value("${jdbc_user}") String jdbUser,
+                                             @Value("${jdbc_password}") String jdbcPassword,
+                                             @Value("${jdbc_name}") String jdbName) {
         PGSimpleDataSource pgSimpleDataSource = new PGSimpleDataSource();
-        pgSimpleDataSource.setUrl(properties.getProperty("jdbc_url"));
-        pgSimpleDataSource.setUser(properties.getProperty("jdbc_user"));
-        pgSimpleDataSource.setPassword(properties.getProperty("jdbc_password"));
-        pgSimpleDataSource.setDatabaseName(properties.getProperty("jdbc_name"));
+        pgSimpleDataSource.setUrl(jdbUrl);
+        pgSimpleDataSource.setUser(jdbUser);
+        pgSimpleDataSource.setPassword(jdbcPassword);
+        pgSimpleDataSource.setDatabaseName(jdbName);
 
         JdbcProductDao jdbcProductDao = new JdbcProductDao(pgSimpleDataSource);
         List<Product> products = jdbcProductDao.findAll();

@@ -1,8 +1,9 @@
 package com.luxoft.olshevchenko.webshop.service;
 
-import com.luxoft.olshevchenko.webshop.web.PropertiesReader;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Hex;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
 import javax.servlet.http.Cookie;
@@ -18,11 +19,16 @@ import java.util.UUID;
  * @author Oleksandr Shevchenko
  */
 @Service
+@PropertySource("classpath:/application.properties")
 public class SecurityService {
 
     List<String> userTokens = Collections.synchronizedList(new ArrayList<>());
-    private static final int MAX_AGE_IN_SECONDS = Integer.parseInt(PropertiesReader.getProperties().getProperty("cookie_max_age"));
     static MessageDigest messageDigest;
+
+    @Value("${cookie_max_age}")
+    private int MAX_AGE_IN_SECONDS;
+
+
 
     @SneakyThrows
     public SecurityService() {

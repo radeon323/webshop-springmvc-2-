@@ -1,27 +1,31 @@
 package com.luxoft.olshevchenko.webshop.web;
 
 import org.postgresql.ds.PGSimpleDataSource;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerConfigurer;
 import org.springframework.web.servlet.view.freemarker.FreeMarkerViewResolver;
 
-import java.util.Properties;
 
 /**
  * @author Oleksandr Shevchenko
  */
 @Configuration
+@PropertySource("classpath:/application.properties")
 public class AppConfig {
 
     @Bean
-    public PGSimpleDataSource pgSimpleDataSource() {
-        Properties properties = PropertiesReader.getProperties();
+    public PGSimpleDataSource pgSimpleDataSource(@Value("${jdbc_url}") String jdbUrl,
+                                                 @Value("${jdbc_user}") String jdbUser,
+                                                 @Value("${jdbc_password}") String jdbcPassword,
+                                                 @Value("${jdbc_name}") String jdbName) {
         PGSimpleDataSource pgSimpleDataSource = new PGSimpleDataSource();
-        pgSimpleDataSource.setUrl(properties.getProperty("jdbc_url"));
-        pgSimpleDataSource.setUser(properties.getProperty("jdbc_user"));
-        pgSimpleDataSource.setPassword(properties.getProperty("jdbc_password"));
-        pgSimpleDataSource.setDatabaseName(properties.getProperty("jdbc_name"));
+        pgSimpleDataSource.setUrl(jdbUrl);
+        pgSimpleDataSource.setUser(jdbUser);
+        pgSimpleDataSource.setPassword(jdbcPassword);
+        pgSimpleDataSource.setDatabaseName(jdbName);
         return pgSimpleDataSource;
     }
 
