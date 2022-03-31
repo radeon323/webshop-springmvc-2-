@@ -15,7 +15,8 @@ import java.util.Objects;
 @Repository
 public class JdbcUserDao implements UserDao {
     private final DataSource dataSource;
-    private static final String ADD_SQL = "INSERT INTO users (email, password, gender, firstName, lastName, about, age, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+    private static final UserRowMapper USER_ROW_MAPPER = new UserRowMapper();
+    private static final String ADD_SQL = "INSERT INTO users (email, password, gender, firstName, lastName, about, age, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?::user_role);";
     private static final String DELETE_BY_ID_SQL = "DELETE FROM users WHERE id = ?;";
     private static final String UPDATE_BY_ID_PASS_SQL = "UPDATE users SET email = ?, password = ? WHERE id = ?;";
     private static final String UPDATE_BY_ID_DATA_SQL = "UPDATE users SET gender = ?, firstName = ?, lastName = ?, about = ?, age = ? WHERE id = ?;";
@@ -34,7 +35,6 @@ public class JdbcUserDao implements UserDao {
             statement.setInt(1, id);
             statement.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -53,7 +53,6 @@ public class JdbcUserDao implements UserDao {
             preparedStatement.setInt(3, user.getId());
             preparedStatement.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -69,7 +68,6 @@ public class JdbcUserDao implements UserDao {
             preparedStatement.setInt(6, user.getId());
             preparedStatement.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -88,7 +86,6 @@ public class JdbcUserDao implements UserDao {
             preparedStatement.setString(8, String.valueOf(user.getRole()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
 
@@ -101,12 +98,11 @@ public class JdbcUserDao implements UserDao {
                 preparedStatement.setInt(1, usrId);
                 ResultSet resultSet = preparedStatement.executeQuery();
                 if (resultSet.next()) {
-                    return buildUser(resultSet);
+                    return USER_ROW_MAPPER.mapRow(resultSet);
                 }
             }
             return null;
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -119,12 +115,11 @@ public class JdbcUserDao implements UserDao {
                 preparedStatement.setString(1, usrEmail);
                 ResultSet resultSet = preparedStatement.executeQuery();
                 if (resultSet.next()) {
-                    return buildUser(resultSet);
+                    return USER_ROW_MAPPER.mapRow(resultSet);
                 }
             }
             return null;
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -142,35 +137,10 @@ public class JdbcUserDao implements UserDao {
                 }
             }
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
         return false;
     }
 
-
-
-    private User buildUser(ResultSet resultSet) throws SQLException {
-        int id = resultSet.getInt(1);
-        String email = resultSet.getString(2);
-        String password = resultSet.getString(3);
-        String gender = resultSet.getString(4);
-        String firstName = resultSet.getString(5);
-        String lastName = resultSet.getString(6);
-        String about = resultSet.getString(7);
-        int age = resultSet.getInt(8);
-        Role role = Role.valueOf(resultSet.getString(9));
-        return User.builder().
-                id(id)
-                .email(email)
-                .password(password)
-                .gender(gender)
-                .firstName(firstName)
-                .lastName(lastName)
-                .about(about)
-                .age(age)
-                .role(role)
-                .build();
-    }
 
 }

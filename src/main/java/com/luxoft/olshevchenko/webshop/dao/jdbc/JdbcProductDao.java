@@ -42,7 +42,6 @@ public class JdbcProductDao implements ProductDao {
             return products;
 
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -54,22 +53,11 @@ public class JdbcProductDao implements ProductDao {
             preparedStatement.setInt(1, id);
             try (ResultSet resultSet = preparedStatement.executeQuery()) {
                 if (resultSet.next()) {
-                    int pId = resultSet.getInt(1);
-                    String name = resultSet.getString(2);
-                    double price = resultSet.getDouble(3);
-                    Timestamp creationDate = resultSet.getTimestamp(4);
-                    Product product = Product.builder().
-                            id(pId)
-                            .name(name)
-                            .price(price)
-                            .creationDate(creationDate.toLocalDateTime())
-                            .build();
-                    return product;
+                    return PRODUCT_ROW_MAPPER.mapRow(resultSet);
                 }
                 return null;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -81,7 +69,6 @@ public class JdbcProductDao implements ProductDao {
             preparedStatement.setInt(1, id);
             preparedStatement.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -95,7 +82,6 @@ public class JdbcProductDao implements ProductDao {
             preparedStatement.setInt(3, product.getId());
             preparedStatement.execute();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }
@@ -109,7 +95,6 @@ public class JdbcProductDao implements ProductDao {
             preparedStatement.setTimestamp(3, Timestamp.valueOf(product.getCreationDate()));
             preparedStatement.executeUpdate();
         } catch (SQLException e) {
-            e.printStackTrace();
             throw new RuntimeException(e);
         }
     }

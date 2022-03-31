@@ -8,7 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,8 +18,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 
 /**
  * @author Oleksandr Shevchenko
@@ -34,7 +32,7 @@ public class UsersController {
     private final SecurityService securityService;
 
     @Value("${cookie_max_age}")
-    private int MAX_AGE_IN_SECONDS;
+    private int maxAgeInSeconds;
 
     @GetMapping("/login")
     protected String getLoginPage() {
@@ -44,20 +42,14 @@ public class UsersController {
 
     @PostMapping("/login")
     protected String login(@RequestParam String email, @RequestParam String password,
-                           HttpSession session, HttpServletResponse response, Model model) {
-
+                           HttpServletResponse response, ModelMap model) {
         User user = userService.findByEmail(email);
 
         if (user != null) {
             if (user.getPassword().equals(md5(password))) {
-                session.setAttribute("user", user);
-                session.setAttribute("userTokens", securityService.getUserTokens());
-                session.setAttribute("cart", new ArrayList<>());
-                session.setMaxInactiveInterval(-1);
-
-                String userToken = securityService.generateAndAddUserToken();
-                Cookie cookie = new Cookie("user-token", userToken);
-                cookie.setMaxAge(MAX_AGE_IN_SECONDS);
+                String token = securityService.loginAndGenerateUserToken(user);
+                Cookie cookie = new Cookie("user-token", token);
+                cookie.setMaxAge(maxAgeInSeconds);
                 response.addCookie(cookie);
                 return "redirect:/products";
 
@@ -100,7 +92,7 @@ public class UsersController {
     protected String register(@RequestParam String email, @RequestParam String password,
                               @RequestParam(defaultValue = "") String gender, @RequestParam(defaultValue = "") String firstName,
                               @RequestParam(defaultValue = "") String lastName, @RequestParam(defaultValue = "") String about,
-                              @RequestParam(defaultValue = "0") int age, Model model) {
+                              @RequestParam(defaultValue = "0") int age, ModelMap model) {
 
         if (!userService.isUserExist(email)) {
             if (email != null && email.length() > 0 && password != null) {
@@ -136,7 +128,7 @@ public class UsersController {
 
 
     @GetMapping("/users/edit")
-    protected String getEditUserPage(@RequestParam int id, Model model) {
+    protected String getEditUserPage(@RequestParam int id, ModelMap model) {
         User user = userService.findById(id);
         model.addAttribute("user", user);
         return "edit_user";
@@ -146,7 +138,7 @@ public class UsersController {
     protected String editUser(@RequestParam String email, @RequestParam String password,
                               @RequestParam(defaultValue = "") String gender, @RequestParam(defaultValue = "") String firstName,
                               @RequestParam(defaultValue = "") String lastName, @RequestParam(defaultValue = "") String about,
-                              @RequestParam(defaultValue = "0") int age, @RequestParam int id, Model model) {
+                              @RequestParam(defaultValue = "0") int age, @RequestParam int id, ModelMap model) {
 
         try {
             User user = User.builder().
@@ -184,13 +176,7 @@ public class UsersController {
 
 
     private String md5(String password) {
-        String md5;
-        try {
-            md5 = SecurityService.md5(password);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-        return md5;
+        return SecurityService.md5(password);
     }
 
     private static String getUserToken(HttpServletRequest request) {

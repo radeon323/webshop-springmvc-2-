@@ -1,9 +1,8 @@
 package com.luxoft.olshevchenko.webshop.web.filter;
 
+import com.luxoft.olshevchenko.webshop.entity.Session;
 import com.luxoft.olshevchenko.webshop.service.SecurityService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContextException;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.web.context.WebApplicationContext;
 import org.springframework.web.context.support.WebApplicationContextUtils;
 
@@ -11,19 +10,19 @@ import javax.servlet.*;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * @author Oleksandr Shevchenko
  */
-@PropertySource("classpath:/application.properties")
-public class SecurityFilter implements Filter {
-    private final List<String> allowedPaths = List.of("/login", "/logout", "/register", "/favicon.ico");
 
-    @Value("${cookie_max_age}")
-    private int MAX_AGE_IN_SECONDS;
+public class SecurityFilter implements Filter {
+    private final List<String> allowedPaths = List.of("/login", "/logout", "/register");
+
+    private final SecurityService securityService = new SecurityService();
 
     public void setSecurityService(SecurityService securityService) {
     }
@@ -58,7 +57,10 @@ public class SecurityFilter implements Filter {
             return;
         }
 
-        if (isAuth(httpServletRequest)) {
+        Session session = securityService.getSessionByToken(getUserToken(httpServletRequest));
+
+        if (session != null) {
+            httpServletRequest.setAttribute("session", session);
             filterChain.doFilter(servletRequest, servletResponse);
         } else {
             httpServletResponse.sendRedirect("/login");
@@ -66,22 +68,14 @@ public class SecurityFilter implements Filter {
 
     }
 
-    private boolean isAuth(HttpServletRequest request) {
+    public String getUserToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
-        HttpSession session = request.getSession();
-        Object userTokens = session.getAttribute("userTokens");
-        System.out.println(MAX_AGE_IN_SECONDS);
-        if(cookies != null && userTokens != null) {
-            for (Cookie cookie : cookies) {
-                if(cookie.getName().equals("user-token") &&
-                    userTokens.toString().contains(cookie.getValue()) &&
-                        cookie.getMaxAge() < MAX_AGE_IN_SECONDS) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return Arrays.stream(cookies)
+                .filter(cookie -> "user-token".equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .collect(Collectors.joining());
     }
+
 
 
     @Override

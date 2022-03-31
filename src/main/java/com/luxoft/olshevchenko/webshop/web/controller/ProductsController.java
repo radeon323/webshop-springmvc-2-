@@ -2,19 +2,19 @@ package com.luxoft.olshevchenko.webshop.web.controller;
 
 import com.luxoft.olshevchenko.webshop.dto.ProductForCart;
 import com.luxoft.olshevchenko.webshop.entity.Product;
-import com.luxoft.olshevchenko.webshop.entity.User;
+import com.luxoft.olshevchenko.webshop.entity.Session;
 import com.luxoft.olshevchenko.webshop.service.ProductService;
 import com.luxoft.olshevchenko.webshop.service.SecurityService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
+import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/products")
@@ -25,7 +25,7 @@ public class ProductsController {
     private final SecurityService securityService;
 
     @GetMapping()
-    protected String showAllProducts(HttpServletRequest request, Model model) {
+    protected String showAllProducts(HttpServletRequest request, ModelMap model) {
         dataForProductsList(request, model);
         return "products_list";
     }
@@ -37,7 +37,7 @@ public class ProductsController {
     }
 
     @PostMapping("/add")
-    protected String addProduct(@RequestParam String name, @RequestParam double price, Model model) {
+    protected String addProduct(@RequestParam String name, @RequestParam double price, ModelMap model) {
         try {
             if(name != null && name.length() > 0 && price > 0) {
                 Optional<Product> optionalProduct = Optional.of(Product.builder()
@@ -59,7 +59,7 @@ public class ProductsController {
     }
 
     @GetMapping("/delete")
-    protected String deleteProduct(@RequestParam int id, HttpServletRequest request, Model model) {
+    protected String deleteProduct(@RequestParam int id, HttpServletRequest request, ModelMap model) {
         productService.remove(id);
         String msgSuccess = "Product " + id + " was successfully deleted!";
         model.addAttribute("msgSuccess", msgSuccess);
@@ -68,14 +68,14 @@ public class ProductsController {
     }
 
     @GetMapping("/edit")
-    protected String getEditProductPage(@RequestParam int id, Model model) {
+    protected String getEditProductPage(@RequestParam int id, ModelMap model) {
         Product product = productService.findById(id);
         model.addAttribute("product", product);
         return "edit_product";
     }
 
     @PostMapping("/edit")
-    protected String editProduct(@RequestParam int id, @RequestParam String name, @RequestParam double price, Model model) {
+    protected String editProduct(@RequestParam int id, @RequestParam String name, @RequestParam double price, ModelMap model) {
         try {
             if(name != null && name.length() > 0 && price > 0) {
                 Optional<Product> optionalProduct = Optional.of(Product.builder()
@@ -96,15 +96,15 @@ public class ProductsController {
     }
 
     @GetMapping("/cart")
-    protected String getCart(HttpServletRequest request, Model model) {
+    protected String getCart(HttpServletRequest request, ModelMap model) {
         dataForProductsListCart(request, model);
         return "cart";
     }
 
     @PostMapping()
-    protected String addProductToCart(@RequestParam int id, HttpServletRequest request, Model model) {
-        HttpSession session = request.getSession();
-        List<Product> products = (List<Product>) session.getAttribute("cart");
+    protected String addProductToCart(@RequestParam int id, HttpServletRequest request, ModelMap model) {
+        Session session = securityService.getSessionByToken(getUserToken(request));
+        List<Product> products = session.getCart();
         dataForProductsList(request, model);
         Product product = productService.findById(id);
         products.add(product);
@@ -113,39 +113,33 @@ public class ProductsController {
 
 
 
-    private void editProduct(Product product, Model model) {
+    private void editProduct(Product product, ModelMap model) {
         productService.edit(product);
         String msgSuccess = "Product <i>" + product.getName() + "</i> was successfully changed!";
         model.addAttribute("msgSuccess", msgSuccess);
     }
 
-    private void addProduct(Product product, Model model) {
+    private void addProduct(Product product, ModelMap model) {
         productService.add(product);
         String msgSuccess = "Product <i>" + product.getName() + "</i> was successfully added!";
         model.addAttribute("msgSuccess", msgSuccess);
     }
 
-    private void writeErrorResponse(Model model) {
+    private void writeErrorResponse(ModelMap model) {
         String errorMsg = "Please fill up all fields!";
         model.addAttribute("errorMsg", errorMsg);
     }
 
-    private void dataForProductsList(HttpServletRequest request, Model model) {
-        HttpSession session = request.getSession();
+    private void dataForProductsList(HttpServletRequest request, ModelMap model) {
+        Session session = securityService.getSessionByToken(getUserToken(request));
         List<Product> products = productService.findAll();
-        User user = (User) session.getAttribute("user");
         model.addAttribute("products", products);
-        model.addAttribute("user", user);
-        if (securityService.isTokenValid(request.getCookies())) {
-            model.addAttribute("login", "true");
-        } else {
-            model.addAttribute("login", "false");
-        }
+        addAttributes(model, session);
     }
 
-    private void dataForProductsListCart(HttpServletRequest request, Model model) {
-        HttpSession session = request.getSession();
-        List<Product> products = (List<Product>) session.getAttribute("cart");
+    private void dataForProductsListCart(HttpServletRequest request, ModelMap model) {
+        Session session = securityService.getSessionByToken(getUserToken(request));
+        List<Product> products = session.getCart();
         products.sort(Comparator.comparingInt(Product::getId));
 
         Set<ProductForCart> productsForCart = new HashSet<>();
@@ -153,15 +147,8 @@ public class ProductsController {
             int quantity = Collections.frequency(products, products.get(i));
             productsForCart.add(dtoConvertToProductForCart(products.get(i), quantity));
         }
-
-        User user = (User) session.getAttribute("user");
         model.addAttribute("products", productsForCart);
-        model.addAttribute("user", user);
-        if (securityService.isTokenValid(request.getCookies())) {
-            model.addAttribute("login", "true");
-        } else {
-            model.addAttribute("login", "false");
-        }
+        addAttributes(model, session);
     }
 
     private ProductForCart dtoConvertToProductForCart(Product product, int quantity) {
@@ -173,6 +160,24 @@ public class ProductsController {
         return productForCart;
     }
 
+
+    public String getUserToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        return Arrays.stream(cookies)
+                .filter(cookie -> "user-token".equals(cookie.getName()))
+                .map(Cookie::getValue)
+                .collect(Collectors.joining());
+    }
+
+
+    public void addAttributes(ModelMap model, Session session) {
+        if (session == null) {
+            model.addAttribute("login", "false");
+        } else {
+            model.addAttribute("user", session.getUser());
+            model.addAttribute("login", "true");
+        }
+    }
 
 
 }

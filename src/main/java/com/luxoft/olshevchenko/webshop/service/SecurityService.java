@@ -1,19 +1,18 @@
 package com.luxoft.olshevchenko.webshop.service;
 
+import com.luxoft.olshevchenko.webshop.entity.Session;
+import com.luxoft.olshevchenko.webshop.entity.User;
 import lombok.SneakyThrows;
 import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 
-import javax.servlet.http.Cookie;
-
 import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+
 
 /**
  * @author Oleksandr Shevchenko
@@ -22,24 +21,23 @@ import java.util.UUID;
 @PropertySource("classpath:/application.properties")
 public class SecurityService {
 
-    List<String> userTokens = Collections.synchronizedList(new ArrayList<>());
-    static MessageDigest messageDigest;
+    private static Map<String, Session> sessions;
+    private static MessageDigest messageDigest;
 
     @Value("${cookie_max_age}")
-    private int MAX_AGE_IN_SECONDS;
-
-
+    private int maxAgeInSeconds;
 
     @SneakyThrows
     public SecurityService() {
         messageDigest = MessageDigest.getInstance("MD5");
+        sessions = new ConcurrentHashMap<>();
     }
 
-    public List<String> getUserTokens() {
-        return userTokens;
+    public Map<String, Session> getSessions() {
+        return sessions;
     }
 
-    public static String md5(String text) throws NoSuchAlgorithmException {
+    public static String md5(String text) {
         List<Object> chars = Collections.synchronizedList(new ArrayList<>());
         for (char c : text.toCharArray()) {
             chars.add(c);
@@ -51,25 +49,28 @@ public class SecurityService {
         return Hex.encodeHexString(bytes);
     }
 
-    public String generateAndAddUserToken() {
-        String userToken = UUID.randomUUID().toString();
-        userTokens.add(userToken);
-        return userToken;
+    public String loginAndGenerateUserToken(User user) {
+        String token = UUID.randomUUID().toString();
+        sessions.put(token, new Session(user, token, LocalDateTime.now().plusMinutes(maxAgeInSeconds/60)));
+        return token;
     }
 
-    public boolean isTokenValid(Cookie[] cookies) {
-            if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if(cookie.getName().equals("user-token")) {
-                    if(userTokens.contains(cookie.getValue()) && cookie.getMaxAge() < MAX_AGE_IN_SECONDS) {
-                        return true;
-                    }
-                    break;
-                }
-            }
+    public boolean isTokenValid(String token) {
+        boolean maxAge;
+        if (sessions.get(token) == null) {
+            maxAge = false;
+        } else {
+            maxAge = sessions.get(token).getMaxAge().isAfter(LocalDateTime.now());
         }
-        return false;
+        return sessions.containsKey(token) && maxAge;
     }
 
+    public Session getSessionByToken(String token) {
+        if (isTokenValid(token)) {
+            return sessions.get(token);
+        } else {
+            return null;
+        }
+    }
 
 }
